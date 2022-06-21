@@ -6,11 +6,11 @@ const blogSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     body: { type: String, required: true },
-    authorId: { type: objectId, required: true, ref: author },
+    authorId: { type: objectId, required: true, ref: "author" },
 
-    tags: { type: [String] },
+    tags: { type: [], default: [] },
     category: { type: [String], required: true },
-    subcategory: { type: [String] },
+    subcategory: { type: [], default: [] },
     deletedAt: Date,
     isDeleted: { type: Boolean, default: false },
     publishedAt: Date,
@@ -19,4 +19,4 @@ const blogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Blog", authorSchema);
+module.exports = mongoose.model("Blog", blogSchema);
