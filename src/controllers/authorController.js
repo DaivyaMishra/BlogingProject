@@ -22,6 +22,12 @@ const isValidPassword = function (pass) {
 const createAuthor = async function (req, res) {
   try {
     let data = req.body;
+
+    if (Object.keys(data).length == 0)
+      return res
+        .status(400)
+        .send({ status: false, msg: "Please enter valid input" });
+
     if (!isValid(data.fname))
       return res
         .status(400)

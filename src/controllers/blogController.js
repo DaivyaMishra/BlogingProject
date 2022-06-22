@@ -7,11 +7,19 @@ const isValid = function (value) {
   else if (typeof value == "string") return true;
 };
 
-const isValidArray = function (value) {
-  if (typeof value == "string" && value.length) {
-    value = [value];
-    return true;
-  } else if (value.length > 0) return true;
+const checkValue = function (value) {
+  let arrValue = [];
+  value.map((x) => {
+    x.trim();
+    if (x.length) arrValue.push(x);
+  });
+  return arrValue.length ? arrValue : false;
+};
+
+const convertToArray = function (value) {
+  if (typeof value == "string" && value) {
+    return [value];
+  } else if (value?.length > 0) return checkValue(value);
   return false;
 };
 
@@ -19,16 +27,24 @@ const isValidArray = function (value) {
 const createblog = async function (req, res) {
   try {
     let data = req.body;
+    let newData = {};
+
+    if (Object.keys(data).length == 0)
+      return res
+        .status(400)
+        .send({ status: false, msg: "Please enter valid input" });
 
     if (!isValid(data.title))
       return res
         .status(400)
         .send({ status: false, msg: "Please enter valid title" });
+    else newData.title = data.title;
 
     if (!isValid(data.body))
       return res
         .status(400)
         .send({ status: false, msg: "Please enter valid body" });
+    else newData.body = data.body;
 
     if (!data.authorId)
       return res
@@ -39,31 +55,41 @@ const createblog = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, msg: "Author ID is not valid" });
+    else newData.authorId = data.authorId;
 
     if (data.category != undefined) {
-      if (!isValidArray(data.category))
+      const categoryArray = convertToArray(data.category);
+      if (!categoryArray)
         return res
           .status(400)
           .send({ status: false, msg: "Please enter valid category" });
+      else newData.category = categoryArray;
     }
 
     if (data.tags != undefined) {
-      if (!isValidArray(data.tags))
+      const tagsArray = convertToArray(data.tags);
+      if (!tagsArray)
         return res
           .status(400)
           .send({ status: false, msg: "Please enter valid Tags" });
+      else newData.tags = tagsArray;
     }
 
     if (data.subcategory != undefined) {
-      if (!isValidArray(data.subcategory))
+      const subcategoryArray = convertToArray(data.subcategory);
+      if (!subcategoryArray)
         return res
           .status(400)
           .send({ status: false, msg: "Please enter valid subcategory" });
+      else newData.subcategory = subcategoryArray;
     }
 
-    if (data.isPublished == true) data.publishedAt = Date.now();
+    if (data.isPublished == true) {
+      newData.publishedAt = Date.now();
+      newData.isPublished = true;
+    }
 
-    let savedData = await blogModel.create(data);
+    let savedData = await blogModel.create(newData);
     return res.status(201).send({ status: true, msg: savedData });
   } catch (err) {
     return res.status(400).send({ status: false, msg: err.message });
@@ -73,8 +99,14 @@ const createblog = async function (req, res) {
 // Update Blog
 const updateBlog = async function (req, res) {
   let { title, body, tags, subcategory, isPublished } = req.body;
-
   try {
+    let addToSet = {};
+
+    if (Object.keys(req.body).length == 0)
+      return res
+        .status(400)
+        .send({ status: false, msg: "Please enter valid input" });
+
     let blogId = req.params.blogId;
     let blog = await blogModel.findOne({ _id: blogId, isDeleted: false });
     if (!blog)
@@ -96,30 +128,31 @@ const updateBlog = async function (req, res) {
           .send({ status: false, msg: "Please enter valid body" });
     }
 
-    if (tags != undefined) {
-      if (!isValidArray(tags))
-        return res
-          .status(400)
-          .send({ status: false, msg: "Please enter valid Tags" });
-    }
-
     if (subcategory != undefined) {
-      if (!isValidArray(subcategory))
+      let subcategoryArray = convertToArray(subcategory);
+      if (!subcategoryArray)
         return res
           .status(400)
           .send({ status: false, msg: "Please enter valid subcategory" });
+      else
+        addToSet = {
+          ...addToSet,
+          subcategory: { $each: subcategoryArray },
+        };
     }
 
-    // if (typeof tags == "string" && tags.length) tags = [tags];
-
-    // // tag update
-    // let tagUpdate = blog.tags;
-    // if (tagsArray.length) tagUpdate.concat(tagsArray);
-
-    // // subcategory update
-    // let sub = blog.subcategory;
-    // if (subcategory != undefined && subcategory != null)
-    //   sub.concat(subcategory);
+    if (tags != undefined) {
+      let tagsArray = convertToArray(tags);
+      if (!tagsArray)
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter valid tags" });
+      else
+        addToSet = {
+          ...addToSet,
+          tags: { $each: tagsArray },
+        };
+    }
 
     let date;
     if (isPublished == true) date = Date.now();
@@ -133,10 +166,7 @@ const updateBlog = async function (req, res) {
           isPublished: isPublished,
           publishedAt: date,
         },
-        $addToSet: {
-          tags: { $each: tags },
-          subcategory: { $each: subcategory },
-        },
+        $addToSet: addToSet,
       },
       {
         new: true,
@@ -207,9 +237,6 @@ const deleteParticularBlog = async function (req, res) {
     }
     if (tags) {
       blogData.tags = { $in: tags.split(",") };
-      //   if(typeof(newTag) == String) {
-      //     newTag = [newTag]
-      // }
     }
     if (subcategory) {
       blogData.subcategory = { $in: subcategory.split(",") };
