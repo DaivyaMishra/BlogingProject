@@ -9,12 +9,19 @@ const {
   deleteBlog,
   deleteParticularBlog,
 } = require("../controllers/blogController");
+const { validateAuthor } = require("../middleware/auth");
+const {
+  userIdMid,
+  createBlogMid,
+  updateBlogMid,
+  deleteParticularBlogMid,
+} = require("../middleware/blog");
 
-router.post("/authors", createAuthor);
-router.post("/blogs", createblog);
+router.post("/authors", validateAuthor, createAuthor);
+router.post("/blogs", createBlogMid, createblog);
 router.get("/blogs", getBlog);
-router.put("/blogs/:blogId", updateBlog);
-router.delete("/blogs/:blogId", deleteBlog);
-router.delete("/blogs", deleteParticularBlog);
+router.put("/blogs/:blogId", userIdMid, updateBlogMid, updateBlog);
+router.delete("/blogs/:blogId", userIdMid, deleteBlog);
+router.delete("/blogs", deleteParticularBlogMid, deleteParticularBlog);
 
 module.exports = router;
