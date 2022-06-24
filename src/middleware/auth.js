@@ -1,14 +1,17 @@
 const jwt = require("jsonwebtoken");
 const blogModel = require("../models/blogModel");
 
+// Authentication
 const authorAuthentication = async function (req, res, next) {
   try {
-    let token = req.headers["x-api-key"] || req.headers["x-Api-key"];
+    let token = req.headers["x-api-key"] || req.headers["X-API-KEY"];
+    // checking token
     if (!token)
       return res
         .status(401)
         .send({ status: false, msg: "token must be present" });
 
+    // validating the token
     let decodedToken = jwt.verify(
       token,
       "project1group29",
@@ -20,6 +23,8 @@ const authorAuthentication = async function (req, res, next) {
         return decoded;
       }
     );
+
+    // creating an attribute in "req" to access the token outside the middleware
     req.token = decodedToken;
     next();
   } catch (err) {
@@ -27,6 +32,7 @@ const authorAuthentication = async function (req, res, next) {
   }
 };
 
+//Authorization
 const authorization = async function (req, res, next) {
   try {
     let blogId = req.params.blogId;
@@ -45,6 +51,8 @@ const authorization = async function (req, res, next) {
         status: false,
         msg: "You are not authorized to perform this task",
       });
+
+    // creating an attribute in "req" to access the blog data outside the middleware
     req.blog = user;
     next();
   } catch (err) {

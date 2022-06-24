@@ -1,13 +1,14 @@
 const mongoose = require("mongoose");
 const blogModel = require("../models/blogModel");
 
-// varification code for
+// function for string validation
 const isValid = function (value) {
   if (typeof value == undefined || typeof value == null) return false;
   if (typeof value == "string" && value.trim().length == 0) return false;
   else if (typeof value == "string") return true;
 };
 
+// function for array value verification
 const checkValue = function (value) {
   let arrValue = [];
   value.map((x) => {
@@ -16,9 +17,10 @@ const checkValue = function (value) {
   return arrValue.length ? arrValue : false;
 };
 
+// function for converting string into array
 const convertToArray = function (value) {
-  if (typeof value == "string" && value) {
-    if (value.trim().length == 0) return false;
+  if (typeof value == "string" && value.length > 0) {
+    if (value.trim().length == 0) return false; // " abc "
     return [value];
   } else if (value?.length > 0) return checkValue(value);
   return false;
@@ -63,11 +65,7 @@ const updateBlog = async function (req, res) {
         return res
           .status(400)
           .send({ status: false, msg: "Please enter valid subcategory" });
-      else
-        addToSet = {
-          ...addToSet,
-          subcategory: { $each: subcategoryArray },
-        };
+      else addToSet.subcategory = { $each: subcategoryArray };
     }
 
     // checking tags and converting it into array if it is not along with validation of empty string
@@ -77,11 +75,7 @@ const updateBlog = async function (req, res) {
         return res
           .status(400)
           .send({ status: false, msg: "Please enter valid tags" });
-      else
-        addToSet = {
-          ...addToSet,
-          tags: { $each: tagsArray },
-        };
+      else addToSet.tags = { $each: tagsArray };
     }
 
     // updating publishing date if isPublished is true
@@ -124,10 +118,12 @@ const getBlog = async function (req, res) {
     const { authorId, category, tags } = req.query;
     const blogData = { isDeleted: false, isPublished: true };
 
-    // checking for category
+    // checking for category input
     if (category) {
       blogData.category = category;
     }
+
+    // checking and verifing author ID input
     if (authorId) {
       if (mongoose.Types.ObjectId.isValid(authorId))
         blogData.authorId = authorId;
@@ -137,9 +133,12 @@ const getBlog = async function (req, res) {
           .send({ status: false, msg: "Please enter valid Author ID" });
     }
 
+    // checking for tags input
     if (tags) {
       blogData.tags = { $in: tags.split(",") };
     }
+
+    // serach query on blog Model
     const blog = await blogModel.find(blogData);
     if (!blog.length) {
       return res.status(404).send({ status: false, msg: "no such blog exist" });
@@ -150,13 +149,15 @@ const getBlog = async function (req, res) {
   }
 };
 
-//delete Blog
+//delete Blog by ID
 const deleteBlog = async function (req, res) {
   try {
+    // checking and updating the isDeleted key
     let blog = await blogModel.findOneAndUpdate(
       { _id: req.blog._id },
       { isDeleted: true, deletedAt: Date.now() }
     );
+
     if (!blog)
       return res
         .status(404)
@@ -169,19 +170,24 @@ const deleteBlog = async function (req, res) {
   }
 };
 
+// delete blog for specific blog
 const deleteParticularBlog = async function (req, res) {
   try {
     let blogData = { isDeleted: false, isPublished: false };
     const { category, authorId, tags, subcategory } = req.query;
+
+    // checking for the empty input
     if (Object.keys(req.query).length == 0)
       return res
         .status(400)
         .send({ status: false, msg: "Please enter valid input" });
 
+    // checking for category input
     if (category) {
       blogData.category = category;
     }
 
+    // checking for authorID input and also validating the same, if it is present
     if (authorId) {
       if (
         mongoose.Types.ObjectId.isValid(authorId) &&
@@ -198,18 +204,25 @@ const deleteParticularBlog = async function (req, res) {
           .send({ status: false, msg: "You are not authorized " });
     } else blogData.authorId = req.token.authorId;
 
+    // checking for tags input
     if (tags) {
       blogData.tags = { $in: tags.split(",") };
     }
+
+    // checking for subCategory input
     if (subcategory) {
       blogData.subcategory = { $in: subcategory.split(",") };
     }
 
+    // finding and updating the isDeleted key
     let result = await blogModel.find(blogData).updateMany({
       $set: { isDeleted: true, deletedAt: Date.now() },
     });
     if (!result)
-      return res.status(404).send({ status: false, msg: "Blog not found" });
+      return res.status(404).send({
+        status: false,
+        msg: "Blog not found or already deleted or published",
+      });
 
     return res
       .status(200)

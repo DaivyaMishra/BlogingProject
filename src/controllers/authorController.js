@@ -1,10 +1,12 @@
 const jwt = require("jsonwebtoken");
 const authorModel = require("../models/authorModel");
 
+// function for verifying the email
 const isValidMail = function (v) {
   return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
 };
 
+// function for verifying the password
 const isValidPassword = function (pass) {
   return /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,10}$/.test(pass);
 };
@@ -19,22 +21,26 @@ const createAuthor = async function (req, res) {
   }
 };
 
+// Author login
 const authorLogin = async function (req, res) {
   try {
     let userName = req.body.email;
     let password = req.body.password;
 
+    // validating the userName(email)
     if (!isValidMail(userName))
       return res
         .status(400)
         .send({ status: false, msg: "Entered mail ID is not valid" });
 
+    // validating the password
     if (!isValidPassword(password))
       return res.status(400).send({
         status: false,
         msg: "Passwrod is not valid",
       });
 
+    // finding for the author with email and password
     let author = await authorModel.findOne({
       email: userName,
       password: password,
