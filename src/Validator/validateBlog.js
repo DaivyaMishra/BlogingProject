@@ -27,7 +27,7 @@ let createBlogMid = async function (req, res, next) {
   try {
     let data = req.body;
     let newData = {};
-
+    console.log(data);
     if (Object.keys(data).length == 0)
       return res
         .status(400)

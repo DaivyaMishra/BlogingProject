@@ -6,14 +6,24 @@ const authorAuthentication = async function (req, res, next) {
     let token = req.headers["x-api-key"] || req.headers["x-Api-key"];
     if (!token)
       return res
-        .status(404)
+        .status(401)
         .send({ status: false, msg: "token must be present" });
 
-    let decodedToken = jwt.verify(token, "project1group29");
+    let decodedToken = jwt.verify(
+      token,
+      "project1group29",
+      function (err, decoded) {
+        if (err)
+          return res
+            .status(401)
+            .send({ status: false, msg: "token is invalid" });
+        return decoded;
+      }
+    );
     req.token = decodedToken;
     next();
   } catch (err) {
-    return res.status(401).send({ status: false, msg: "token is invalid" });
+    return res.status(500).send({ status: false, msg: err.message });
   }
 };
 
@@ -22,8 +32,8 @@ const authorization = async function (req, res, next) {
     let blogId = req.params.blogId;
     let userLoggedIn = req.token.authorId;
 
-    // author validation
-    let user = await blogModel.findOne({ blogId, isDeleted: false });
+    // Blog validation
+    let user = await blogModel.findOne({ _id: blogId, isDeleted: false });
     if (!user) {
       return res
         .status(404)

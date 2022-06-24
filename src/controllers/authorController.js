@@ -49,11 +49,9 @@ const authorLogin = async function (req, res) {
     let token = jwt.sign(
       {
         authorId: author._id.toString(),
+        expireIn: "24h",
       },
-      "project1group29", //secret key
-      {
-        expiresIn: "24h",
-      }
+      "project1group29" //secret key
     );
     return res.status(200).send({ status: true, token: token });
   } catch (err) {

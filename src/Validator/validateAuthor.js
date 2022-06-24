@@ -55,7 +55,7 @@ const validateAuthor = async function (req, res, next) {
     let mail = await authorModel.findOne({ email: data.email });
     if (mail)
       return res
-        .status(400)
+        .status(409)
         .send({ status: false, msg: "Mail Id is already exist" });
 
     req.author = data;
