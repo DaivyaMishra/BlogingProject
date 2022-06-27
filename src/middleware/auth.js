@@ -12,21 +12,15 @@ const authorAuthentication = async function (req, res, next) {
         .send({ status: false, msg: "token must be present" });
 
     // validating the token
-    let decodedToken = jwt.verify(
-      token,
-      "project1group29",
-      function (err, decoded) {
-        if (err)
-          return res
-            .status(401)
-            .send({ status: false, msg: "token is invalid" });
-        return decoded;
+    jwt.verify(token, "project1group29", function (err, decoded) {
+      if (err)
+        return res.status(401).send({ status: false, msg: "token is invalid" });
+      else {
+        // creating an attribute in "req" to access the token outside the middleware
+        req.token = decoded;
+        next();
       }
-    );
-
-    // creating an attribute in "req" to access the token outside the middleware
-    req.token = decodedToken;
-    next();
+    });
   } catch (err) {
     return res.status(500).send({ status: false, msg: err.message });
   }

@@ -55,7 +55,7 @@ const validateAuthor = async function (req, res, next) {
     if (!isValidMail(data.email))
       return res
         .status(400)
-        .send({ status: false, msg: "Entered mail ID is not valid" });
+        .send({ status: false, msg: "Enter a valid mail ID" });
     // checking for the duplicate mail ID
     let mail = await authorModel.findOne({ email: data.email });
     if (mail)
@@ -80,4 +80,7 @@ const validateAuthor = async function (req, res, next) {
 
 module.exports = {
   validateAuthor,
+  isValidMail,
+  isValid,
+  isValidPassword,
 };

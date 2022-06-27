@@ -1,30 +1,7 @@
 const mongoose = require("mongoose");
 const blogModel = require("../models/blogModel");
-
-// function for string validation
-const isValid = function (value) {
-  if (typeof value == undefined || typeof value == null) return false;
-  if (typeof value == "string" && value.trim().length == 0) return false;
-  else if (typeof value == "string") return true;
-};
-
-// function for array value verification
-const checkValue = function (value) {
-  let arrValue = [];
-  value.map((x) => {
-    if (x.trim().length) arrValue.push(x);
-  });
-  return arrValue.length ? arrValue : false;
-};
-
-// function for converting string into array
-const convertToArray = function (value) {
-  if (typeof value == "string" && value.length > 0) {
-    if (value.trim().length == 0) return false; // " abc "
-    return [value];
-  } else if (value?.length > 0) return checkValue(value);
-  return false;
-};
+const { isValid } = require("../Validator/validateAuthor");
+const { convertToArray } = require("../Validator/validateBlog");
 
 // create blog
 const createblog = async function (req, res) {
@@ -80,7 +57,7 @@ const updateBlog = async function (req, res) {
 
     // updating publishing date if isPublished is true
     let date;
-    if (isPublished == true) date = Date.now();
+    if (isPublished === true) date = Date.now();
 
     // updating the record
     let result = await blogModel.findOneAndUpdate(

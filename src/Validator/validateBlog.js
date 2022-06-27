@@ -1,11 +1,5 @@
+const { isValid } = require("../Validator/validateAuthor");
 const authorModel = require("../models/authorModel");
-
-// function for string verification
-const isValid = function (value) {
-  if (typeof value == undefined || typeof value == null) return false;
-  if (typeof value == "string" && value.trim().length == 0) return false;
-  else if (typeof value == "string") return true;
-};
 
 // function for array value verification
 const checkValue = function (value) {
@@ -111,4 +105,6 @@ let createBlogMid = async function (req, res, next) {
 
 module.exports = {
   createBlogMid,
+  convertToArray,
+  checkValue,
 };
