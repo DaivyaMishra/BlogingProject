@@ -6,7 +6,7 @@ const { isValidMail, isValidPassword } = require("../Validator/validateAuthor");
 const createAuthor = async function (req, res) {
   try {
     let savedData = await authorModel.create(req.author);
-    res.status(201).send({ status: true, msg: savedData });
+    res.status(201).send({ status: true, data: savedData });
   } catch (err) {
     res.status(500).send({ status: false, msg: err.message });
   }
@@ -17,6 +17,12 @@ const authorLogin = async function (req, res) {
   try {
     let userName = req.body.email;
     let password = req.body.password;
+
+    if (Object.keys(req.body).length == 0) {
+      return res
+        .status(400)
+        .send({ status: false, msg: "Please provide login details" });
+    }
 
     // validating the userName(email)
     if (!isValidMail(userName))
@@ -46,11 +52,16 @@ const authorLogin = async function (req, res) {
     let token = jwt.sign(
       {
         authorId: author._id.toString(),
-        expireIn: "24h",
       },
-      "project1group29" //secret key
+      "project1group29",
+      {
+        expiresIn: "24h",
+      }
     );
-    return res.status(200).send({ status: true, token: token });
+    res.header("x-api-key", token);
+    return res
+      .status(200)
+      .send({ status: true, msg: "Author login successfull", data: token });
   } catch (err) {
     return res.status(500).send(err.message);
   }

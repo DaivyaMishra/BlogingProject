@@ -7,7 +7,7 @@ const { convertToArray } = require("../Validator/validateBlog");
 const createblog = async function (req, res) {
   try {
     let savedData = await blogModel.create(req.blog);
-    return res.status(201).send({ status: true, msg: savedData });
+    return res.status(201).send({ status: true, data: savedData });
   } catch (err) {
     return res.status(400).send({ status: false, msg: err.message });
   }
@@ -58,6 +58,7 @@ const updateBlog = async function (req, res) {
     // updating publishing date if isPublished is true
     let date;
     if (isPublished === true) date = Date.now();
+    else if (isPublished === false) date = null;
 
     // updating the record
     let result = await blogModel.findOneAndUpdate(
@@ -83,7 +84,7 @@ const updateBlog = async function (req, res) {
         .send({ status: "false", msg: "Blog ID is not found" });
 
     // success message
-    return res.status(200).send({ status: true, msg: result });
+    return res.status(200).send({ status: true, data: result });
   } catch (err) {
     return res.status(500).send({ status: false, msg: err.message });
   }
@@ -92,12 +93,16 @@ const updateBlog = async function (req, res) {
 //get blog
 const getBlog = async function (req, res) {
   try {
-    const { authorId, category, tags } = req.query;
-    const blogData = { isDeleted: false, isPublished: true };
+    const { authorId, category, tags, subcategory } = req.query;
+    const blogData = { isDeleted: false, isPublished: true, deletedAt: null };
 
     // checking for category input
     if (category) {
-      blogData.category = category;
+      if (isValid(category)) blogData.category = category.trim();
+      else
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter a valid category" });
     }
 
     // checking and verifing author ID input
@@ -112,7 +117,24 @@ const getBlog = async function (req, res) {
 
     // checking for tags input
     if (tags) {
-      blogData.tags = { $in: tags.split(",") };
+      if (tags.trim().length) {
+        const tagArr = tags.split(",").map((tag) => tag.trim());
+        blogData.tags = { $in: tagArr };
+      } else
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter valid tags" });
+    }
+
+    // checking for subcategory
+    if (subcategory) {
+      if (subcategory.trim().length) {
+        const subArr = subcategory.split(",").map((tag) => tag.trim());
+        blogData.subcategory = { $in: subArr };
+      } else
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter valid subcategory" });
     }
 
     // serach query on blog Model
@@ -183,19 +205,31 @@ const deleteParticularBlog = async function (req, res) {
 
     // checking for tags input
     if (tags) {
-      blogData.tags = { $in: tags.split(",") };
+      if (tags.trim().length) {
+        const tagArr = tags.split(",").map((tag) => tag.trim());
+        blogData.tags = { $in: tagArr };
+      } else
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter valid tags" });
     }
 
-    // checking for subCategory input
+    // checking for subcategory
     if (subcategory) {
-      blogData.subcategory = { $in: subcategory.split(",") };
+      if (subcategory.trim().length) {
+        const subArr = subcategory.split(",").map((tag) => tag.trim());
+        blogData.subcategory = { $in: subArr };
+      } else
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter valid subcategory" });
     }
 
     // finding and updating the isDeleted key
     let result = await blogModel.find(blogData).updateMany({
       $set: { isDeleted: true, deletedAt: Date.now() },
     });
-    if (!result)
+    if (result.modifiedCount == 0)
       return res.status(404).send({
         status: false,
         msg: "Blog not found or already deleted or published",

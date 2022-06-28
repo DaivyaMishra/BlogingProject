@@ -12,7 +12,7 @@ const isValidTitle = function (str) {
 
 // function for string verification
 const isValid = function (value) {
-  if (typeof value == undefined || typeof value == null) return false;
+  if (typeof value == undefined || value == null) return false;
   if (typeof value == "string" && value.trim().length == 0) return false;
   else if (typeof value == "string") return true;
 };

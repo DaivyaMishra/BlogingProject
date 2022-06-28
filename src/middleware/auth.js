@@ -33,7 +33,10 @@ const authorization = async function (req, res, next) {
     let userLoggedIn = req.token.authorId;
 
     // Blog validation
-    let user = await blogModel.findOne({ _id: blogId, isDeleted: false });
+    let user = await blogModel.findOne({
+      _id: blogId,
+      isDeleted: false,
+    });
     if (!user) {
       return res
         .status(404)

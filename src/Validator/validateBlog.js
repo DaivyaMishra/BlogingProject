@@ -93,7 +93,7 @@ let createBlogMid = async function (req, res, next) {
     if (data.isPublished == true) {
       newData.publishedAt = Date.now();
       newData.isPublished = true;
-    }
+    } else newData.publishedAt = null;
 
     // creating an attribute in "req" to access the blog data outside the Validator
     req.blog = newData;
